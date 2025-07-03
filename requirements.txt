@@ -1,0 +1,7 @@
+streamlit
+pandas
+langchain
+tqdm
+PyPDF2
+sentence-transformers
+databricks-sdk
