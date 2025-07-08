@@ -24,6 +24,7 @@ def get_workspace_url():
 # 🔑 Auth + Index details
 # ---------------------------------------
 host = get_workspace_url()
+pat_token = os.getenv("DATABRICKS_TOKEN", " ")
 
 index_name = "rag-files.rag-files-schema.docs_idx"
 VECTOR_SEARCH_ENDPOINT_NAME = "rag_vector_endpoint"
