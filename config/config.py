@@ -18,7 +18,10 @@ def get_workspace_url():
         spark = SparkSession.builder.getOrCreate()
         return "https://" + spark.conf.get("spark.databricks.workspaceUrl")
     except Exception:
-        return os.getenv("DATABRICKS_HOST", "https://dbc-5a435f58-327e.cloud.databricks.com")  # fallback for local dev
+        host = os.getenv("DATABRICKS_HOST", "https://dbc-5a435f58-327e.cloud.databricks.com").strip()
+        if not host.startswith("https://"):
+            host = "https://" + host
+        return host
 
 # ---------------------------------------
 # 🔑 Auth + Index details
@@ -48,4 +51,6 @@ def get_retriever():
         endpoint_name=VECTOR_SEARCH_ENDPOINT_NAME,
         index_name=index_name
     )
-    return DatabricksVectorSearch(vs_index, text_column="text", embedding=embedding_model).as_retriever()
+    vectorstore = DatabricksVectorSearch(vs_index, text_column="text", embedding=embedding_model)
+    
+    return vectorstore.as_retriever()
