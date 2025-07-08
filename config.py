@@ -1,5 +1,0 @@
-DATABRICKS_TOKEN = "<your-pat-token>"
-DATABRICKS_ENDPOINT_URL = "https://<databricks-instance>/serving-endpoints/llm-test/invocations"
-UNITY_VOLUME_PATH = "/Volumes/rag-files/rag-files-schema/rag-pdf-volume"
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-DB_NAME = "your_catalog.your_schema"
