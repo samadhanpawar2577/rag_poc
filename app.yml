@@ -1,5 +1,6 @@
 
 command: ['streamlit', 'run', 'app.py']
 
-# env:
-#   DATABRICKS_TOKEN: ${secrets.DATABRICKS_TOKEN}
+env:
+  - name: 'DATABRICKS_TOKEN'
+    valueFrom: 'secrets/my-scope/DATABRICKS_TOKEN'
