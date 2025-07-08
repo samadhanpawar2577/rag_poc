@@ -1,0 +1,7 @@
+
+app:
+  name: rag-poc-app
+  type: streamlit
+
+  # The file to run (should exist in your project root)
+  entrypoint: app.py
