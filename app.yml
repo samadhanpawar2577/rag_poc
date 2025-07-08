@@ -1,7 +1,5 @@
 
-app:
-  name: rag-poc-app
-  type: streamlit
+command: ['streamlit', 'run', 'app.py']
 
-  # The file to run (should exist in your project root)
-  entrypoint: app.py
+# env:
+#   DATABRICKS_TOKEN: ${secrets.DATABRICKS_TOKEN}
