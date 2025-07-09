@@ -2,5 +2,5 @@
 command: ['streamlit', 'run', 'app.py']
 
 env:
-  - name: 'DATABRICKS_TOKEN'
-    valueFrom: 'secrets/my-scope/DATABRICKS_TOKEN'
+  - name: DATABRICKS_HOST
+    value: https://dbc-5a435f58-327e.cloud.databricks.com
