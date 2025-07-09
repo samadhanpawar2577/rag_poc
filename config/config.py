@@ -41,26 +41,13 @@ from langchain_community.embeddings import DatabricksEmbeddings
 
 embedding_model = DatabricksEmbeddings(endpoint="databricks-gte-large-en")
 
-import os
 from databricks.sdk import WorkspaceClient
 from databricks.vector_search.client import VectorSearchClient
-from langchain_community.vectorstores import DatabricksVectorSearch
-from langchain_community.embeddings import DatabricksEmbeddings
-
-# Service Principal credentials
-client_id = os.getenv("DATABRICKS_CLIENT_ID")
-client_secret = os.getenv("DATABRICKS_CLIENT_SECRET")
-host = get_workspace_url()
 
 def get_retriever():
-    # Create workspace client with service principal
-    w = WorkspaceClient(
-        host=host,
-        client_id=client_id,
-        client_secret=client_secret
-    )
+    # This will automatically detect authentication method
+    w = WorkspaceClient()
     
-    # Use the workspace client's auth for vector search
     vsc = VectorSearchClient(workspace_url=w, disable_notice=True)
     
     vs_index = vsc.get_index(
