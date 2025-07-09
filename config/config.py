@@ -53,8 +53,8 @@ def get_retriever():
     
     vsc = VectorSearchClient(
         workspace_url=host,
-        client_id=client_id,
-        client_secret=client_secret,
+        service_principal_client_id=client_id,
+        service_principal_client_secret=client_secret,
         disable_notice=True
     )
     
