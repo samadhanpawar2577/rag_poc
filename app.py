@@ -11,7 +11,7 @@ def main():
     if query:
         with st.spinner("Thinking..."):
             response = answer_question(query)
-            render_answer("response")
+            render_answer(response)
 
 if __name__ == "__main__":
     main()
