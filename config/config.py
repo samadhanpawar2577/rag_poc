@@ -61,7 +61,7 @@ def get_retriever():
     )
     
     # Use the workspace client's auth for vector search
-    vsc = VectorSearchClient(workspace_client=w, disable_notice=True)
+    vsc = VectorSearchClient(workspace_url=w, disable_notice=True)
     
     vs_index = vsc.get_index(
         endpoint_name=VECTOR_SEARCH_ENDPOINT_NAME,
