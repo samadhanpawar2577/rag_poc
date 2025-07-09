@@ -14,15 +14,20 @@ except ImportError:
 # ✅ Dynamically detect Databricks workspace URL
 # ---------------------------------------
 def get_workspace_url():
-    try:
-        from pyspark.sql import SparkSession
-        spark = SparkSession.builder.getOrCreate()
-        return "https://" + spark.conf.get("spark.databricks.workspaceUrl")
-    except Exception:
-        host = os.getenv("DATABRICKS_HOST", "").strip()
-        if not host.startswith("https://"):
-            host = "https://" + host
-        return host
+    # In Databricks App Services, DATABRICKS_HOST is automatically available
+    host = os.getenv("DATABRICKS_HOST", "").strip()
+    if not host:
+        # Fallback to Spark detection for notebooks
+        try:
+            from pyspark.sql import SparkSession
+            spark = SparkSession.builder.getOrCreate()
+            return "https://" + spark.conf.get("spark.databricks.workspaceUrl")
+        except Exception:
+            raise Exception("❌ Unable to detect Databricks workspace URL")
+    
+    if not host.startswith("https://"):
+        host = "https://" + host
+    return host
 
 # ---------------------------------------
 # 🔑 OAuth Token using Service Principal
@@ -30,10 +35,13 @@ def get_workspace_url():
 def get_oauth_token():
     client_id = os.getenv("DATABRICKS_CLIENT_ID")
     client_secret = os.getenv("DATABRICKS_CLIENT_SECRET")
+    
     if not all([client_id, client_secret]):
-        raise Exception("❌ Missing DATABRICKS_CLIENT_ID or DATABRICKS_CLIENT_SECRET.")
+        raise Exception("❌ Missing DATABRICKS_CLIENT_ID or DATABRICKS_CLIENT_SECRET environment variables")
 
+    host = get_workspace_url()
     token_url = f"{host}/oidc/token"
+    
     data = {
         "grant_type": "client_credentials",
         "client_id": client_id,
@@ -41,20 +49,21 @@ def get_oauth_token():
         "scope": "all-apis"
     }
 
-    response = requests.post(token_url, data=data)
-    if response.status_code != 200:
-        raise Exception(f"❌ Failed to get token: {response.text}")
-    
-    return response.json()["access_token"]
-
+    try:
+        response = requests.post(token_url, data=data)
+        if response.status_code != 200:
+            raise Exception(f"❌ Failed to get OAuth token: {response.text}")
+        
+        return response.json()["access_token"]
+    except Exception as e:
+        raise Exception(f"❌ OAuth token request failed: {str(e)}")
 
 # ---------------------------------------
-# 🌐 Host + Index config
+# 🌐 Configuration
 # ---------------------------------------
 host = get_workspace_url()
-
-index_name = "rag-files.rag-files-schema.docs_idx"
-VECTOR_SEARCH_ENDPOINT_NAME = "rag_vector_endpoint"
+index_name = os.getenv("VECTOR_SEARCH_INDEX_NAME", "rag-files.rag-files-schema.docs_idx")
+VECTOR_SEARCH_ENDPOINT_NAME = os.getenv("VECTOR_SEARCH_ENDPOINT_NAME", "rag_vector_endpoint")
 
 # ---------------------------------------
 # 🧠 LangChain + Vector Search setup
@@ -66,18 +75,51 @@ from langchain_community.embeddings import DatabricksEmbeddings
 embedding_model = DatabricksEmbeddings(endpoint="databricks-gte-large-en")
 
 def get_retriever():
-    vsc = VectorSearchClient(
-        workspace_url=host,
-        personal_access_token=get_oauth_token(),  # ✅ Use OAuth token here
-        disable_notice=True
-    )
-    vs_index = vsc.get_index(
-        endpoint_name=VECTOR_SEARCH_ENDPOINT_NAME,
-        index_name=index_name
-    )
-    vectorstore = DatabricksVectorSearch(
-        vs_index,
-        text_column="text",
-        embedding=embedding_model
-    )
-    return vectorstore.as_retriever()
+    """Get the vector search retriever for RAG"""
+    try:
+        vsc = VectorSearchClient(
+            workspace_url=host,
+            personal_access_token=get_oauth_token(),  # OAuth token
+            disable_notice=True
+        )
+        
+        vs_index = vsc.get_index(
+            endpoint_name=VECTOR_SEARCH_ENDPOINT_NAME,
+            index_name=index_name
+        )
+        
+        vectorstore = DatabricksVectorSearch(
+            vs_index,
+            text_column="text",
+            embedding=embedding_model
+        )
+        
+        return vectorstore.as_retriever()
+    
+    except Exception as e:
+        raise Exception(f"❌ Failed to initialize retriever: {str(e)}")
+
+# ---------------------------------------
+# 🔧 Validation function
+# ---------------------------------------
+def validate_config():
+    """Validate that all required configurations are available"""
+    required_vars = [
+        "DATABRICKS_CLIENT_ID",
+        "DATABRICKS_CLIENT_SECRET"
+    ]
+    
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        raise Exception(f"❌ Missing required environment variables: {', '.join(missing_vars)}")
+    
+    # Test OAuth token
+    try:
+        token = get_oauth_token()
+        if not token:
+            raise Exception("❌ Failed to obtain OAuth token")
+    except Exception as e:
+        raise Exception(f"❌ OAuth configuration invalid: {str(e)}")
+    
+    return True
