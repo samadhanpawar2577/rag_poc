@@ -32,15 +32,26 @@ def get_workspace_url():
 # ---------------------------------------
 # 🔑 OAuth Token using Service Principal
 # ---------------------------------------
+# Updated config.py with better error handling
+import os
+import requests
+import streamlit as st
+
 def get_oauth_token():
     client_id = os.getenv("DATABRICKS_CLIENT_ID")
     client_secret = os.getenv("DATABRICKS_CLIENT_SECRET")
+    
+    # Debug: Check if credentials are available
+    st.write(f"Debug: Client ID present: {bool(client_id)}")
+    st.write(f"Debug: Client Secret present: {bool(client_secret)}")
     
     if not all([client_id, client_secret]):
         raise Exception("❌ Missing DATABRICKS_CLIENT_ID or DATABRICKS_CLIENT_SECRET environment variables")
 
     host = get_workspace_url()
     token_url = f"{host}/oidc/token"
+    
+    st.write(f"Debug: Token URL: {token_url}")
     
     data = {
         "grant_type": "client_credentials",
@@ -51,11 +62,15 @@ def get_oauth_token():
 
     try:
         response = requests.post(token_url, data=data)
+        st.write(f"Debug: OAuth response status: {response.status_code}")
+        st.write(f"Debug: OAuth response: {response.text}")
+        
         if response.status_code != 200:
             raise Exception(f"❌ Failed to get OAuth token: {response.text}")
         
         return response.json()["access_token"]
     except Exception as e:
+        st.error(f"OAuth request exception: {str(e)}")
         raise Exception(f"❌ OAuth token request failed: {str(e)}")
 
 # ---------------------------------------
