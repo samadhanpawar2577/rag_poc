@@ -41,14 +41,22 @@ from langchain_community.embeddings import DatabricksEmbeddings
 
 embedding_model = DatabricksEmbeddings(endpoint="databricks-gte-large-en")
 
-from databricks.sdk import WorkspaceClient
-from databricks.vector_search.client import VectorSearchClient
-
 def get_retriever():
-    # This will automatically detect authentication method
-    w = WorkspaceClient()
+    host = get_workspace_url()
     
-    vsc = VectorSearchClient(workspace_url=w, disable_notice=True)
+    # Service Principal credentials
+    client_id = os.getenv("DATABRICKS_CLIENT_ID")
+    client_secret = os.getenv("DATABRICKS_CLIENT_SECRET")
+    
+    if not client_id or not client_secret:
+        raise ValueError("DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET must be set")
+    
+    vsc = VectorSearchClient(
+        workspace_url=host,
+        client_id=client_id,
+        client_secret=client_secret,
+        disable_notice=True
+    )
     
     vs_index = vsc.get_index(
         endpoint_name=VECTOR_SEARCH_ENDPOINT_NAME,
