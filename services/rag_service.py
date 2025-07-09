@@ -4,10 +4,21 @@ from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain_community.chat_models import ChatDatabricks
 
-TEMPLATE = """You are an assistant who is helping a user with their questions.
-Use the following pieces of context to answer the question at the end:
+TEMPLATE = """
+You are a knowledgeable assistant helping to answer user questions based only on the provided context.
+
+Instructions:
+- Use only the information in the context below to answer the question.
+- If the context does not contain enough information, reply with "The answer is not available in the provided context."
+- Be concise and accurate in your response.
+- Do not make assumptions or hallucinate information.
+
+Context:
 {context}
-Question: {question}
+
+Question:
+{question}
+
 Answer:
 """
 
